@@ -1,0 +1,1612 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Daily Ledger</title>
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --panel:#12141b;
+      --panel2:#171a22;
+      --text:#e9eef6;
+      --muted:#a9b4c2;
+      --border:#2a2f3a;
+      --accent:#6ea8fe;
+      --danger:#ff6b6b;
+      --ok:#4dd4ac;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+      --pad: 14px;
+      --gap: 12px;
+      font-synthesis-weight: none;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #07080b 0%, var(--bg) 35%, #07080b 100%);
+      color:var(--text);
+    }
+    a{color:var(--accent); text-decoration:none}
+    .app{
+      max-width:1100px;
+      margin:0 auto;
+      padding:20px 14px 60px;
+    }
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:16px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logo{
+      width:36px;height:36px;border-radius:10px;
+      background: radial-gradient(circle at 30% 30%, #8bb8ff 0%, #4c7dff 35%, #2c3a7a 100%);
+      box-shadow: var(--shadow);
+    }
+    h1{
+      font-size:18px;
+      margin:0;
+      line-height:1.1;
+      letter-spacing:.2px;
+    }
+    .sub{
+      font-size:12px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      padding:8px 10px;
+      border-radius:999px;
+      box-shadow: 0 3px 10px rgba(0,0,0,.18);
+    }
+    .pill label{font-size:12px;color:var(--muted)}
+    select, input, button, textarea{
+      font: inherit;
+      color: var(--text);
+    }
+    select, input, textarea{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      border-radius:10px;
+      padding:10px 10px;
+      outline:none;
+    }
+    input::placeholder, textarea::placeholder{color: #7f8a99}
+    textarea{min-height:70px; resize:vertical}
+    button{
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      padding:10px 12px;
+      border-radius:10px;
+      cursor:pointer;
+      transition: transform .05s ease, background .15s ease, border-color .15s ease;
+    }
+    button:hover{background: rgba(255,255,255,.08)}
+    button:active{transform: translateY(1px)}
+    .primary{
+      background: rgba(110,168,254,.16);
+      border-color: rgba(110,168,254,.45);
+    }
+    .danger{
+      background: rgba(255,107,107,.12);
+      border-color: rgba(255,107,107,.45);
+    }
+    .ok{
+      background: rgba(77,212,172,.12);
+      border-color: rgba(77,212,172,.45);
+    }
+
+    .tabs{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin: 12px 0 16px;
+    }
+    .tab{
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.03);
+      cursor:pointer;
+      user-select:none;
+      font-size:13px;
+      color: var(--muted);
+    }
+    .tab.active{
+      color: var(--text);
+      border-color: rgba(110,168,254,.45);
+      background: rgba(110,168,254,.12);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 14px;
+      align-items:start;
+    }
+    @media (max-width: 920px){
+      .grid{grid-template-columns: 1fr}
+    }
+
+    .card{
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding: 12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card .hd h2{
+      font-size:14px;
+      margin:0;
+      letter-spacing:.2px;
+    }
+    .card .bd{padding: 14px}
+    .muted{color:var(--muted)}
+    .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    @media (max-width: 520px){
+      .row{grid-template-columns: 1fr}
+    }
+    .field label{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:6px;
+    }
+    .field .hint{
+      margin-top:6px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .toolbar .left, .toolbar .right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:12px;
+    }
+    th, td{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      font-size:13px;
+      text-align:start;
+      vertical-align:top;
+    }
+    th{color: var(--muted); font-weight:600; background: rgba(255,255,255,.03)}
+    tr:last-child td{border-bottom:none}
+    .mono{font-variant-numeric: tabular-nums}
+    .amt.expense{color: #ffb3b3}
+    .amt.income{color: #a8ffd9}
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size:12px;
+      white-space:nowrap;
+    }
+
+    .empty{
+      padding: 18px;
+      color: var(--muted);
+      border: 1px dashed rgba(255,255,255,.16);
+      border-radius: 12px;
+      text-align:center;
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .list-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .list-item .meta{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      min-width:0;
+    }
+    .list-item .meta .title{
+      font-size:13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 520px;
+    }
+    .list-item .meta .sub{
+      font-size:12px;color:var(--muted)
+    }
+    .list-item .actions{
+      display:flex;
+      gap:8px;
+      flex-shrink:0;
+    }
+
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(18,20,27,.92);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 10px 12px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      display:none;
+      max-width:min(880px, calc(100% - 24px));
+      color: var(--text);
+      font-size:13px;
+      z-index:9999;
+    }
+    .toast.show{display:block}
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 8px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+    }
+
+    /* RTL tweaks */
+    [dir="rtl"] th, [dir="rtl"] td { text-align: right; }
+    [dir="rtl"] .top-actions { justify-content:flex-start; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1 id="ui_title">Daily Ledger</h1>
+          <div class="sub" id="ui_subtitle">Personal cash-flow tracker (local-only)</div>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <div class="pill">
+          <label for="langSelect" id="ui_lang_label">Language</label>
+          <select id="langSelect">
+            <option value="en">English</option>
+            <option value="he">עברית</option>
+            <option value="ru">Русский</option>
+          </select>
+        </div>
+
+        <button class="ok" id="btnExport" type="button">Export backup</button>
+        <label class="pill" style="cursor:pointer">
+          <span id="ui_import_backup">Import backup</span>
+          <input id="fileImport" type="file" accept="application/json" style="display:none">
+        </label>
+      </div>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Navigation">
+      <div class="tab active" role="tab" tabindex="0" data-tab="add" id="tab_add">Add</div>
+      <div class="tab" role="tab" tabindex="0" data-tab="transactions" id="tab_transactions">Transactions</div>
+      <div class="tab" role="tab" tabindex="0" data-tab="settings" id="tab_settings">Settings</div>
+    </nav>
+
+    <main>
+      <!-- ADD TAB -->
+      <section class="tabview" id="view_add">
+        <div class="grid">
+          <div class="card">
+            <div class="hd">
+              <h2 id="ui_add_title">Add transaction</h2>
+              <div class="muted" style="font-size:12px">
+                <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span>
+                <span id="ui_quick_add_hint">to save</span>
+              </div>
+            </div>
+            <div class="bd">
+              <form id="txForm">
+                <div class="row">
+                  <div class="field">
+                    <label for="txDate" id="ui_date">Date</label>
+                    <input id="txDate" type="date" required />
+                  </div>
+                  <div class="field">
+                    <label for="txAmount" id="ui_amount">Amount</label>
+                    <input id="txAmount" type="number" step="0.01" placeholder="-25.90" required />
+                    <div class="hint" id="ui_amount_hint">Use negative for expenses, positive for income.</div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="field">
+                    <label for="txCategory" id="ui_category">Category</label>
+                    <select id="txCategory" required></select>
+                    <div class="hint" id="ui_category_hint"></div>
+                  </div>
+                  <div class="field">
+                    <label for="txPay" id="ui_payment">Payment method</label>
+                    <select id="txPay" required></select>
+                  </div>
+                </div>
+
+                <div class="field" style="margin-bottom:12px">
+                  <label for="txDesc" id="ui_description">Description (optional)</label>
+                  <input id="txDesc" type="text" placeholder="Coffee at campus / Shell / Groceries..." />
+                  <div class="hint" id="ui_desc_hint">Adding a description helps the app learn future suggestions.</div>
+                </div>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap">
+                  <button class="primary" type="submit" id="btnSaveTx">Save</button>
+                  <button type="button" id="btnClearForm">Clear</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="hd">
+              <h2 id="ui_month_snapshot">This month snapshot</h2>
+            </div>
+            <div class="bd">
+              <div class="list" id="monthStats"></div>
+              <div style="height:10px"></div>
+              <div class="muted" id="ui_local_note" style="font-size:12px">
+                Data stays on this device/browser. Export backups regularly.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TRANSACTIONS TAB -->
+      <section class="tabview" id="view_transactions" style="display:none">
+        <div class="card">
+          <div class="hd">
+            <h2 id="ui_tx_title">Transactions</h2>
+            <div class="muted" style="font-size:12px" id="ui_tx_count">0 items</div>
+          </div>
+          <div class="bd">
+            <div class="toolbar">
+              <div class="left">
+                <input id="filterText" type="text" placeholder="Search description..." />
+                <select id="filterCategory">
+                  <option value="">All categories</option>
+                </select>
+                <select id="filterPay">
+                  <option value="">All payment methods</option>
+                </select>
+              </div>
+              <div class="right">
+                <button class="danger" type="button" id="btnDeleteAll">Delete all</button>
+              </div>
+            </div>
+
+            <div id="txTableWrap"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS TAB -->
+      <section class="tabview" id="view_settings" style="display:none">
+        <div class="grid">
+          <div class="card">
+            <div class="hd">
+              <h2 id="ui_categories_title">Categories</h2>
+              <button class="primary" type="button" id="btnAddCategory">Add category</button>
+            </div>
+            <div class="bd">
+              <div class="muted" id="ui_categories_note" style="font-size:12px; margin-bottom:10px"></div>
+              <div id="categoriesList" class="list"></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="hd">
+              <h2 id="ui_payments_title">Payment methods</h2>
+              <button class="primary" type="button" id="btnAddPayment">Add payment method</button>
+            </div>
+            <div class="bd">
+              <div id="paymentsList" class="list"></div>
+              <hr style="border:none;border-top:1px solid rgba(255,255,255,.08); margin:14px 0">
+              <h3 style="margin:0 0 8px; font-size:13px" id="ui_data_tools">Data tools</h3>
+              <div style="display:flex; gap:10px; flex-wrap:wrap">
+                <button type="button" id="btnExport2">Export backup</button>
+                <label class="pill" style="cursor:pointer">
+                  <span id="ui_import_backup2">Import backup</span>
+                  <input id="fileImport2" type="file" accept="application/json" style="display:none">
+                </label>
+              </div>
+              <div class="muted" style="font-size:12px; margin-top:10px" id="ui_data_tools_note"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+  </div>
+
+<script>
+/* =========================
+   Daily Ledger (single-file)
+   ========================= */
+
+/* ---------- i18n ---------- */
+const I18N = {
+  en: {
+    ui: {
+      title: "Daily Ledger",
+      subtitle: "Personal cash-flow tracker (local-only)",
+      language: "Language",
+      export: "Export backup",
+      import: "Import backup",
+      addTab: "Add",
+      txTab: "Transactions",
+      settingsTab: "Settings",
+      addTitle: "Add transaction",
+      quickAddHint: "to save",
+      date: "Date",
+      amount: "Amount",
+      amountHint: "Use negative for expenses, positive for income.",
+      category: "Category",
+      payment: "Payment method",
+      description: "Description (optional)",
+      descHint: "Adding a description helps the app learn future suggestions.",
+      save: "Save",
+      clear: "Clear",
+      monthSnapshot: "This month snapshot",
+      localNote: "Data stays on this device/browser. Export backups regularly.",
+      txTitle: "Transactions",
+      deleteAll: "Delete all",
+      search: "Search description...",
+      allCategories: "All categories",
+      allPayments: "All payment methods",
+      categoriesTitle: "Categories",
+      categoriesNote: "Built-ins can be renamed/archived. Transactions keep the category id.",
+      addCategory: "Add category",
+      paymentsTitle: "Payment methods",
+      addPayment: "Add payment method",
+      dataTools: "Data tools",
+      dataToolsNote: "Import replaces everything with the backup file contents.",
+      confirmDeleteAll: "Delete ALL transactions? This cannot be undone.",
+      confirmDeleteCategory: "Archive this category? (It will stay in existing transactions.)",
+      confirmDeletePayment: "Delete this payment method? You may need to update existing transactions.",
+      edit: "Edit",
+      del: "Delete",
+      archive: "Archive",
+      restore: "Restore",
+      archived: "Archived",
+      income: "Income",
+      expense: "Expense",
+      items: "items",
+      emptyTx: "No transactions yet.",
+      duplicateWarn: "Tip: keep amounts negative for expenses."
+    },
+    category: {
+      hot_bev: "Hot beverage",
+      gas: "Gas",
+      cafeteria: "Cafeteria lunch",
+      parking: "Parking (monthly)",
+      groceries: "Groceries",
+      unplanned: "Unplanned",
+      clothes: "Clothes",
+      kids: "Kids outings",
+      vacations: "Vacations / Flights abroad",
+      salary: "Salary",
+      inheritance: "Inheritance income",
+      oil: "Oil well",
+      coffee_farm: "Coffee farm"
+    },
+    payment: {
+      cash: "Cash",
+      credit: "Credit card",
+      debit: "Debit card",
+      transfer: "Bank transfer"
+    }
+  },
+
+  he: {
+    ui: {
+      title: "יומן הוצאות",
+      subtitle: "מעקב תזרים אישי (רק מקומי)",
+      language: "שפה",
+      export: "ייצוא גיבוי",
+      import: "ייבוא גיבוי",
+      addTab: "הוספה",
+      txTab: "תנועות",
+      settingsTab: "הגדרות",
+      addTitle: "הוספת תנועה",
+      quickAddHint: "לשמירה",
+      date: "תאריך",
+      amount: "סכום",
+      amountHint: "הוצאה שלילית, הכנסה חיובית.",
+      category: "קטגוריה",
+      payment: "אמצעי תשלום",
+      description: "תיאור (רשות)",
+      descHint: "תיאור עוזר לאפליקציה ללמוד הצעות בעתיד.",
+      save: "שמירה",
+      clear: "ניקוי",
+      monthSnapshot: "סיכום החודש",
+      localNote: "הנתונים נשמרים רק בדפדפן/מכשיר הזה. מומלץ לייצא גיבוי.",
+      txTitle: "תנועות",
+      deleteAll: "מחיקת הכל",
+      search: "חיפוש בתיאור...",
+      allCategories: "כל הקטגוריות",
+      allPayments: "כל אמצעי התשלום",
+      categoriesTitle: "קטגוריות",
+      categoriesNote: "קטגוריות מובנות אפשר לשנות/לארכב. תנועות שומרות את מזהה הקטגוריה.",
+      addCategory: "הוספת קטגוריה",
+      paymentsTitle: "אמצעי תשלום",
+      addPayment: "הוספת אמצעי תשלום",
+      dataTools: "כלי נתונים",
+      dataToolsNote: "ייבוא מחליף את כל הנתונים בתכולת קובץ הגיבוי.",
+      confirmDeleteAll: "למחוק את כל התנועות? אי אפשר לבטל.",
+      confirmDeleteCategory: "לארכב את הקטגוריה? (היא תישאר בתנועות קיימות.)",
+      confirmDeletePayment: "למחוק את אמצעי התשלום? ייתכן שתצטרך לעדכן תנועות קיימות.",
+      edit: "עריכה",
+      del: "מחיקה",
+      archive: "ארכוב",
+      restore: "שחזור",
+      archived: "בארכיון",
+      income: "הכנסה",
+      expense: "הוצאה",
+      items: "פריטים",
+      emptyTx: "אין תנועות עדיין.",
+      duplicateWarn: "טיפ: הוצאות כסכומים שליליים."
+    },
+    category: {
+      hot_bev: "משקה חם",
+      gas: "דלק",
+      cafeteria: "ארוחת צהריים בקפטריה",
+      parking: "חניה (חודשי)",
+      groceries: "קניות לבית",
+      unplanned: "לא מתוכנן",
+      clothes: "ביגוד",
+      kids: "בילוי עם הילדים",
+      vacations: "חופשות / טיסות לחו\"ל",
+      salary: "משכורת",
+      inheritance: "הכנסה מירושה",
+      oil: "באר נפט",
+      coffee_farm: "חוות קפה"
+    },
+    payment: {
+      cash: "מזומן",
+      credit: "כרטיס אשראי",
+      debit: "כרטיס דביט",
+      transfer: "העברה בנקאית"
+    }
+  },
+
+  ru: {
+    ui: {
+      title: "Дневной бюджет",
+      subtitle: "Личный учёт денежных потоков (локально)",
+      language: "Язык",
+      export: "Экспорт бэкапа",
+      import: "Импорт бэкапа",
+      addTab: "Добавить",
+      txTab: "Операции",
+      settingsTab: "Настройки",
+      addTitle: "Добавить операцию",
+      quickAddHint: "чтобы сохранить",
+      date: "Дата",
+      amount: "Сумма",
+      amountHint: "Расход — отрицательный, доход — положительный.",
+      category: "Категория",
+      payment: "Способ оплаты",
+      description: "Описание (необязательно)",
+      descHint: "Описание помогает приложению учиться и предлагать категории.",
+      save: "Сохранить",
+      clear: "Очистить",
+      monthSnapshot: "Сводка месяца",
+      localNote: "Данные хранятся только в этом браузере/устройстве. Регулярно делайте экспорт.",
+      txTitle: "Операции",
+      deleteAll: "Удалить всё",
+      search: "Поиск по описанию...",
+      allCategories: "Все категории",
+      allPayments: "Все способы оплаты",
+      categoriesTitle: "Категории",
+      categoriesNote: "Встроенные можно переименовать/архивировать. Операции сохраняют id категории.",
+      addCategory: "Добавить категорию",
+      paymentsTitle: "Способы оплаты",
+      addPayment: "Добавить способ оплаты",
+      dataTools: "Инструменты данных",
+      dataToolsNote: "Импорт полностью заменяет данные содержимым бэкапа.",
+      confirmDeleteAll: "Удалить ВСЕ операции? Это нельзя отменить.",
+      confirmDeleteCategory: "Архивировать категорию? (Она останется в существующих операциях.)",
+      confirmDeletePayment: "Удалить способ оплаты? Возможно, придётся обновить существующие операции.",
+      edit: "Редактировать",
+      del: "Удалить",
+      archive: "Архив",
+      restore: "Восстановить",
+      archived: "В архиве",
+      income: "Доход",
+      expense: "Расход",
+      items: "элементов",
+      emptyTx: "Пока нет операций.",
+      duplicateWarn: "Совет: расходы вводите отрицательными."
+    },
+    category: {
+      hot_bev: "Горячий напиток",
+      gas: "Топливо",
+      cafeteria: "Обед в кафетерии",
+      parking: "Парковка (месяц)",
+      groceries: "Продукты (семья)",
+      unplanned: "Незапланированное",
+      clothes: "Одежда",
+      kids: "Развлечения с детьми",
+      vacations: "Отпуск / перелёты",
+      salary: "Зарплата",
+      inheritance: "Доход от наследства",
+      oil: "Нефтяная скважина",
+      coffee_farm: "Кофейная ферма"
+    },
+    payment: {
+      cash: "Наличные",
+      credit: "Кредитная карта",
+      debit: "Дебетовая карта",
+      transfer: "Банковский перевод"
+    }
+  }
+};
+
+function t(key){
+  const lang = state.lang;
+  const parts = key.split(".");
+  let node = I18N[lang];
+  for (const p of parts){
+    node = node?.[p];
+    if (node == null) break;
+  }
+  if (typeof node === "string") return node;
+  // fallback to english
+  node = I18N.en;
+  for (const p of parts){
+    node = node?.[p];
+    if (node == null) break;
+  }
+  return (typeof node === "string") ? node : key;
+}
+
+/* ---------- utils ---------- */
+const $ = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+function toast(msg){
+  const el = $("#toast");
+  el.textContent = msg;
+  el.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(()=> el.classList.remove("show"), 2600);
+}
+
+function uuid(){
+  // decent UUIDv4 for local use
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
+    const r = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
+    const v = c === "x" ? r : (r & 3) | 8;
+    return v.toString(16);
+  });
+}
+
+function todayISO(){
+  const d = new Date();
+  const tzOff = d.getTimezoneOffset() * 60000;
+  return new Date(d - tzOff).toISOString().slice(0,10);
+}
+
+function monthKey(dateISO){
+  return dateISO.slice(0,7); // YYYY-MM
+}
+
+function formatAmount(n){
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  return sign + abs.toFixed(2);
+}
+
+/* ---------- IndexedDB ---------- */
+const DB_NAME = "daily-ledger-db";
+const DB_VERSION = 1;
+
+const dbp = {
+  _db: null,
+  async open(){
+    if (this._db) return this._db;
+    this._db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains("meta")){
+          db.createObjectStore("meta", { keyPath: "key" });
+        }
+        if (!db.objectStoreNames.contains("transactions")){
+          const st = db.createObjectStore("transactions", { keyPath: "id" });
+          st.createIndex("by_date", "date");
+          st.createIndex("by_month", "month");
+          st.createIndex("by_category", "categoryId");
+          st.createIndex("by_payment", "paymentMethodId");
+        }
+        if (!db.objectStoreNames.contains("categories")){
+          db.createObjectStore("categories", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("payments")){
+          db.createObjectStore("payments", { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains("rules")){
+          db.createObjectStore("rules", { keyPath: "id" });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    return this._db;
+  },
+
+  async tx(storeNames, mode, fn){
+    const db = await this.open();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(storeNames, mode);
+      const stores = {};
+      for (const name of storeNames) stores[name] = tx.objectStore(name);
+      let out;
+      Promise.resolve()
+        .then(()=> fn(stores, tx))
+        .then(res => { out = res; })
+        .catch(err => { reject(err); });
+      tx.oncomplete = () => resolve(out);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  },
+
+  async getMeta(key){
+    return await this.tx(["meta"], "readonly", async ({meta}) => {
+      return await reqP(meta.get(key));
+    });
+  },
+  async setMeta(key, value){
+    return await this.tx(["meta"], "readwrite", async ({meta}) => {
+      return await reqP(meta.put({ key, value }));
+    });
+  },
+
+  async list(store){
+    return await this.tx([store], "readonly", async (s) => {
+      return await reqP(s[store].getAll());
+    });
+  },
+  async put(store, val){
+    return await this.tx([store], "readwrite", async (s) => {
+      return await reqP(s[store].put(val));
+    });
+  },
+  async del(store, key){
+    return await this.tx([store], "readwrite", async (s) => {
+      return await reqP(s[store].delete(key));
+    });
+  },
+  async clear(store){
+    return await this.tx([store], "readwrite", async (s) => {
+      return await reqP(s[store].clear());
+    });
+  },
+};
+
+function reqP(req){
+  return new Promise((resolve, reject) => {
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+/* ---------- app state ---------- */
+const state = {
+  lang: "en",
+  categories: [],
+  payments: [],
+  transactions: [],
+  rules: [],
+  ui: { editingTxId: null }
+};
+
+/* ---------- seed data ---------- */
+function seededCategories(){
+  const mk = (key, type="expense") => ({
+    id: uuid(),
+    type,
+    nameKey: key,
+    customName: null,
+    parentId: null,
+    isAutoGenerated: false,
+    isArchived: false
+  });
+
+  // Expense
+  const expense = [
+    mk("hot_bev","expense"),
+    mk("gas","expense"),
+    mk("cafeteria","expense"),
+    mk("parking","expense"),
+    mk("groceries","expense"),
+    mk("unplanned","expense"),
+    mk("clothes","expense"),
+    mk("kids","expense"),
+    mk("vacations","expense"),
+  ];
+  // Income
+  const income = [
+    mk("salary","income"),
+    mk("inheritance","income"),
+    mk("oil","income"),
+    mk("coffee_farm","income"),
+  ];
+  return [...expense, ...income];
+}
+
+function seededPayments(){
+  const mk = (key) => ({
+    id: uuid(),
+    nameKey: key,
+    customName: null,
+    isArchived: false
+  });
+  return [mk("cash"), mk("credit"), mk("debit"), mk("transfer")];
+}
+
+/* ---------- initialization ---------- */
+async function ensureSeeded(){
+  const meta = await dbp.getMeta("initialized");
+  if (meta?.value) return;
+
+  const cats = seededCategories();
+  const pays = seededPayments();
+
+  await dbp.tx(["categories","payments","meta"], "readwrite", async ({categories, payments, meta}) => {
+    for (const c of cats) categories.put(c);
+    for (const p of pays) payments.put(p);
+    meta.put({ key:"initialized", value:true });
+    meta.put({ key:"lang", value:"en" });
+  });
+}
+
+async function loadAll(){
+  const langMeta = await dbp.getMeta("lang");
+  state.lang = langMeta?.value || "en";
+  state.categories = await dbp.list("categories");
+  state.payments = await dbp.list("payments");
+  state.transactions = await dbp.list("transactions");
+  state.rules = await dbp.list("rules");
+}
+
+/* ---------- rendering ---------- */
+function applyLanguage(){
+  const lang = state.lang;
+  $("#langSelect").value = lang;
+
+  const dir = (lang === "he") ? "rtl" : "ltr";
+  document.documentElement.lang = lang;
+  document.documentElement.dir = dir;
+
+  // Top
+  $("#ui_title").textContent = t("ui.title");
+  $("#ui_subtitle").textContent = t("ui.subtitle");
+  $("#ui_lang_label").textContent = t("ui.language");
+  $("#btnExport").textContent = t("ui.export");
+  $("#ui_import_backup").textContent = t("ui.import");
+
+  // Tabs
+  $("#tab_add").textContent = t("ui.addTab");
+  $("#tab_transactions").textContent = t("ui.txTab");
+  $("#tab_settings").textContent = t("ui.settingsTab");
+
+  // Add form
+  $("#ui_add_title").textContent = t("ui.addTitle");
+  $("#ui_quick_add_hint").textContent = t("ui.quickAddHint");
+  $("#ui_date").textContent = t("ui.date");
+  $("#ui_amount").textContent = t("ui.amount");
+  $("#ui_amount_hint").textContent = t("ui.amountHint");
+  $("#ui_category").textContent = t("ui.category");
+  $("#ui_payment").textContent = t("ui.payment");
+  $("#ui_description").textContent = t("ui.description");
+  $("#ui_desc_hint").textContent = t("ui.descHint");
+  $("#btnSaveTx").textContent = t("ui.save");
+  $("#btnClearForm").textContent = t("ui.clear");
+  $("#ui_month_snapshot").textContent = t("ui.monthSnapshot");
+  $("#ui_local_note").textContent = t("ui.localNote");
+
+  // Transactions view
+  $("#ui_tx_title").textContent = t("ui.txTitle");
+  $("#btnDeleteAll").textContent = t("ui.deleteAll");
+  $("#filterText").placeholder = t("ui.search");
+
+  // Settings
+  $("#ui_categories_title").textContent = t("ui.categoriesTitle");
+  $("#btnAddCategory").textContent = t("ui.addCategory");
+  $("#ui_categories_note").textContent = t("ui.categoriesNote");
+  $("#ui_payments_title").textContent = t("ui.paymentsTitle");
+  $("#btnAddPayment").textContent = t("ui.addPayment");
+  $("#ui_data_tools").textContent = t("ui.dataTools");
+  $("#ui_data_tools_note").textContent = t("ui.dataToolsNote");
+  $("#btnExport2").textContent = t("ui.export");
+  $("#ui_import_backup2").textContent = t("ui.import");
+
+  rebuildSelects();
+  renderTransactions();
+  renderSettings();
+  renderMonthSnapshot();
+}
+
+function catLabel(cat){
+  if (!cat) return "—";
+  if (cat.customName) return cat.customName;
+  if (cat.nameKey) return t("category."+cat.nameKey);
+  return "—";
+}
+
+function payLabel(p){
+  if (!p) return "—";
+  if (p.customName) return p.customName;
+  if (p.nameKey) return t("payment."+p.nameKey);
+  return "—";
+}
+
+function rebuildSelects(){
+  // Categories in add form: only non-archived
+  const cats = state.categories.filter(c => !c.isArchived);
+  cats.sort((a,b) => catLabel(a).localeCompare(catLabel(b), state.lang));
+
+  const txCategory = $("#txCategory");
+  txCategory.innerHTML = "";
+  for (const c of cats){
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = `${catLabel(c)} ${c.type === "income" ? "· "+t("ui.income") : ""}`.trim();
+    txCategory.appendChild(opt);
+  }
+
+  // Payments
+  const pays = state.payments.filter(p => !p.isArchived);
+  pays.sort((a,b) => payLabel(a).localeCompare(payLabel(b), state.lang));
+  const txPay = $("#txPay");
+  txPay.innerHTML = "";
+  for (const p of pays){
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = payLabel(p);
+    txPay.appendChild(opt);
+  }
+
+  // Filters
+  const filterCategory = $("#filterCategory");
+  filterCategory.innerHTML = `<option value="">${t("ui.allCategories")}</option>`;
+  for (const c of cats){
+    const opt = document.createElement("option");
+    opt.value = c.id;
+    opt.textContent = catLabel(c);
+    filterCategory.appendChild(opt);
+  }
+
+  const filterPay = $("#filterPay");
+  filterPay.innerHTML = `<option value="">${t("ui.allPayments")}</option>`;
+  for (const p of pays){
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = payLabel(p);
+    filterPay.appendChild(opt);
+  }
+}
+
+function renderMonthSnapshot(){
+  const wrap = $("#monthStats");
+  const now = todayISO();
+  const m = monthKey(now);
+
+  const tx = state.transactions.filter(x => x.month === m);
+  const income = tx.filter(x => x.amount > 0).reduce((s,x)=>s+x.amount,0);
+  const expense = tx.filter(x => x.amount < 0).reduce((s,x)=>s+x.amount,0);
+  const net = income + expense;
+
+  const blocks = [
+    { label: t("ui.income"), value: income, cls:"income" },
+    { label: t("ui.expense"), value: expense, cls:"expense" },
+    { label: "Net", value: net, cls: net>=0 ? "income":"expense" },
+    { label: t("ui.items"), value: tx.length, cls:"" }
+  ];
+
+  wrap.innerHTML = blocks.map(b => {
+    const v = (typeof b.value === "number") ? formatAmount(b.value) : String(b.value);
+    return `
+      <div class="list-item">
+        <div class="meta">
+          <div class="title">${escapeHtml(b.label)}</div>
+          <div class="sub">${m}</div>
+        </div>
+        <div class="mono amt ${b.cls}">${escapeHtml(v)}</div>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderTransactions(){
+  const filterText = $("#filterText").value.trim().toLowerCase();
+  const filterCategory = $("#filterCategory").value;
+  const filterPay = $("#filterPay").value;
+
+  let tx = [...state.transactions];
+  if (filterCategory) tx = tx.filter(x => x.categoryId === filterCategory);
+  if (filterPay) tx = tx.filter(x => x.paymentMethodId === filterPay);
+  if (filterText) tx = tx.filter(x => (x.description || "").toLowerCase().includes(filterText));
+
+  tx.sort((a,b) => (b.date.localeCompare(a.date) || b.createdAt - a.createdAt));
+
+  $("#ui_tx_count").textContent = `${tx.length} ${t("ui.items")}`;
+
+  const wrap = $("#txTableWrap");
+  if (tx.length === 0){
+    wrap.innerHTML = `<div class="empty">${escapeHtml(t("ui.emptyTx"))}</div>`;
+    return;
+  }
+
+  const catMap = new Map(state.categories.map(c => [c.id, c]));
+  const payMap = new Map(state.payments.map(p => [p.id, p]));
+
+  const rows = tx.map(x => {
+    const cat = catMap.get(x.categoryId);
+    const pay = payMap.get(x.paymentMethodId);
+    const cls = x.amount >= 0 ? "income" : "expense";
+    return `
+      <tr>
+        <td class="mono">${escapeHtml(x.date)}</td>
+        <td class="mono amt ${cls}">${escapeHtml(formatAmount(x.amount))}</td>
+        <td>${escapeHtml(catLabel(cat))}</td>
+        <td><span class="chip">${escapeHtml(payLabel(pay))}</span></td>
+        <td>${escapeHtml(x.description || "")}</td>
+        <td style="white-space:nowrap">
+          <button type="button" data-act="edit" data-id="${x.id}">${escapeHtml(t("ui.edit"))}</button>
+          <button type="button" class="danger" data-act="del" data-id="${x.id}">${escapeHtml(t("ui.del"))}</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>${escapeHtml(t("ui.date"))}</th>
+          <th>${escapeHtml(t("ui.amount"))}</th>
+          <th>${escapeHtml(t("ui.category"))}</th>
+          <th>${escapeHtml(t("ui.payment"))}</th>
+          <th>${escapeHtml(t("ui.description"))}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  // Bind row actions (delegated)
+  wrap.onclick = async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const id = btn.getAttribute("data-id");
+    const act = btn.getAttribute("data-act");
+    if (!id || !act) return;
+    if (act === "del"){
+      await deleteTransaction(id);
+    } else if (act === "edit"){
+      beginEditTransaction(id);
+    }
+  };
+}
+
+function renderSettings(){
+  // Categories list
+  const cats = [...state.categories];
+  cats.sort((a,b) => {
+    // active first
+    if (!!a.isArchived !== !!b.isArchived) return a.isArchived ? 1 : -1;
+    return catLabel(a).localeCompare(catLabel(b), state.lang);
+  });
+
+  const list = $("#categoriesList");
+  list.innerHTML = cats.map(c => {
+    const status = c.isArchived ? `<span class="chip">${escapeHtml(t("ui.archived"))}</span>` : "";
+    return `
+      <div class="list-item">
+        <div class="meta">
+          <div class="title">${escapeHtml(catLabel(c))} ${status}</div>
+          <div class="sub">${escapeHtml(c.type === "income" ? t("ui.income") : t("ui.expense"))}</div>
+        </div>
+        <div class="actions">
+          <button type="button" data-act="rename" data-id="${c.id}">${escapeHtml(t("ui.edit"))}</button>
+          ${c.isArchived
+            ? `<button type="button" class="ok" data-act="restore" data-id="${c.id}">${escapeHtml(t("ui.restore"))}</button>`
+            : `<button type="button" data-act="archive" data-id="${c.id}">${escapeHtml(t("ui.archive"))}</button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  list.onclick = async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const id = btn.getAttribute("data-id");
+    const act = btn.getAttribute("data-act");
+    if (!id || !act) return;
+    if (act === "rename") await renameCategory(id);
+    if (act === "archive") await archiveCategory(id, true);
+    if (act === "restore") await archiveCategory(id, false);
+  };
+
+  // Payments list
+  const pays = [...state.payments];
+  pays.sort((a,b) => {
+    if (!!a.isArchived !== !!b.isArchived) return a.isArchived ? 1 : -1;
+    return payLabel(a).localeCompare(payLabel(b), state.lang);
+  });
+
+  const plist = $("#paymentsList");
+  plist.innerHTML = pays.map(p => {
+    const status = p.isArchived ? `<span class="chip">${escapeHtml(t("ui.archived"))}</span>` : "";
+    return `
+      <div class="list-item">
+        <div class="meta">
+          <div class="title">${escapeHtml(payLabel(p))} ${status}</div>
+          <div class="sub">—</div>
+        </div>
+        <div class="actions">
+          <button type="button" data-act="rename" data-id="${p.id}">${escapeHtml(t("ui.edit"))}</button>
+          ${p.isArchived
+            ? `<button type="button" class="ok" data-act="restore" data-id="${p.id}">${escapeHtml(t("ui.restore"))}</button>`
+            : `<button type="button" class="danger" data-act="del" data-id="${p.id}">${escapeHtml(t("ui.del"))}</button>`
+          }
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  plist.onclick = async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const id = btn.getAttribute("data-id");
+    const act = btn.getAttribute("data-act");
+    if (!id || !act) return;
+    if (act === "rename") await renamePayment(id);
+    if (act === "restore") await archivePayment(id, false);
+    if (act === "del") await deletePayment(id);
+  };
+}
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+  }[c]));
+}
+
+/* ---------- actions: transactions ---------- */
+async function saveTransactionFromForm(){
+  const date = $("#txDate").value;
+  const amountRaw = $("#txAmount").value;
+  const categoryId = $("#txCategory").value;
+  const paymentMethodId = $("#txPay").value;
+  const description = $("#txDesc").value.trim();
+
+  const amount = Number(amountRaw);
+  if (!date || !Number.isFinite(amount) || !categoryId || !paymentMethodId){
+    toast("Missing required fields.");
+    return;
+  }
+
+  const txId = state.ui.editingTxId || uuid();
+  const existing = state.transactions.find(x => x.id === txId);
+
+  const record = {
+    id: txId,
+    date,
+    month: monthKey(date),
+    amount,
+    categoryId,
+    paymentMethodId,
+    description: description || "",
+    source: existing?.source || "manual",
+    createdAt: existing?.createdAt || Date.now()
+  };
+
+  await dbp.put("transactions", record);
+
+  // update local state
+  const idx = state.transactions.findIndex(x => x.id === txId);
+  if (idx >= 0) state.transactions[idx] = record;
+  else state.transactions.push(record);
+
+  // reset editing
+  state.ui.editingTxId = null;
+  $("#btnSaveTx").textContent = t("ui.save");
+
+  toast("Saved.");
+  clearFormKeepDate();
+  renderTransactions();
+  renderMonthSnapshot();
+}
+
+function clearFormKeepDate(){
+  $("#txAmount").value = "";
+  $("#txDesc").value = "";
+  // keep date, category, payment as convenience
+}
+
+function resetFormAll(){
+  $("#txDate").value = todayISO();
+  $("#txAmount").value = "";
+  $("#txDesc").value = "";
+  state.ui.editingTxId = null;
+  $("#btnSaveTx").textContent = t("ui.save");
+}
+
+function beginEditTransaction(id){
+  const tx = state.transactions.find(x => x.id === id);
+  if (!tx) return;
+
+  // switch to Add tab
+  setTab("add");
+
+  state.ui.editingTxId = id;
+  $("#btnSaveTx").textContent = t("ui.edit");
+
+  $("#txDate").value = tx.date;
+  $("#txAmount").value = String(tx.amount);
+  $("#txCategory").value = tx.categoryId;
+  $("#txPay").value = tx.paymentMethodId;
+  $("#txDesc").value = tx.description || "";
+  toast("Editing. Save to apply.");
+}
+
+async function deleteTransaction(id){
+  await dbp.del("transactions", id);
+  state.transactions = state.transactions.filter(x => x.id !== id);
+  toast("Deleted.");
+  renderTransactions();
+  renderMonthSnapshot();
+}
+
+/* ---------- actions: categories ---------- */
+async function addCategory(){
+  const name = prompt("Category name:");
+  if (!name) return;
+
+  const type = prompt("Type: expense or income?", "expense");
+  const normalized = (type || "expense").toLowerCase();
+  const finalType = (normalized === "income") ? "income" : "expense";
+
+  const cat = {
+    id: uuid(),
+    type: finalType,
+    nameKey: null,
+    customName: name.trim(),
+    parentId: null,
+    isAutoGenerated: false,
+    isArchived: false
+  };
+
+  await dbp.put("categories", cat);
+  state.categories.push(cat);
+  rebuildSelects();
+  renderSettings();
+  toast("Added.");
+}
+
+async function renameCategory(id){
+  const cat = state.categories.find(c => c.id === id);
+  if (!cat) return;
+  const current = cat.customName || (cat.nameKey ? t("category."+cat.nameKey) : "");
+  const next = prompt("Rename category:", current);
+  if (!next) return;
+
+  // If it was built-in (nameKey), store customName override
+  cat.customName = next.trim();
+  await dbp.put("categories", cat);
+
+  rebuildSelects();
+  renderSettings();
+  renderTransactions();
+  toast("Renamed.");
+}
+
+async function archiveCategory(id, archive){
+  const cat = state.categories.find(c => c.id === id);
+  if (!cat) return;
+
+  if (archive){
+    const ok = confirm(t("ui.confirmDeleteCategory"));
+    if (!ok) return;
+  }
+
+  cat.isArchived = !!archive;
+  await dbp.put("categories", cat);
+
+  rebuildSelects();
+  renderSettings();
+  renderTransactions();
+  toast(archive ? "Archived." : "Restored.");
+}
+
+/* ---------- actions: payments ---------- */
+async function addPayment(){
+  const name = prompt("Payment method name:");
+  if (!name) return;
+
+  const p = {
+    id: uuid(),
+    nameKey: null,
+    customName: name.trim(),
+    isArchived: false
+  };
+  await dbp.put("payments", p);
+  state.payments.push(p);
+  rebuildSelects();
+  renderSettings();
+  toast("Added.");
+}
+
+async function renamePayment(id){
+  const p = state.payments.find(x => x.id === id);
+  if (!p) return;
+  const current = p.customName || (p.nameKey ? t("payment."+p.nameKey) : "");
+  const next = prompt("Rename payment method:", current);
+  if (!next) return;
+
+  p.customName = next.trim();
+  await dbp.put("payments", p);
+
+  rebuildSelects();
+  renderSettings();
+  renderTransactions();
+  toast("Renamed.");
+}
+
+async function archivePayment(id, archive){
+  const p = state.payments.find(x => x.id === id);
+  if (!p) return;
+  p.isArchived = !!archive;
+  await dbp.put("payments", p);
+  rebuildSelects();
+  renderSettings();
+  renderTransactions();
+}
+
+async function deletePayment(id){
+  const ok = confirm(t("ui.confirmDeletePayment"));
+  if (!ok) return;
+
+  await dbp.del("payments", id);
+  state.payments = state.payments.filter(x => x.id !== id);
+
+  // Note: existing transactions referencing this payment will show "—"
+  rebuildSelects();
+  renderSettings();
+  renderTransactions();
+  toast("Deleted.");
+}
+
+/* ---------- backup import/export ---------- */
+async function exportBackup(){
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    lang: state.lang,
+    categories: state.categories,
+    payments: state.payments,
+    transactions: state.transactions,
+    rules: state.rules
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `daily-ledger-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("Backup exported.");
+}
+
+async function importBackupFile(file){
+  const txt = await file.text();
+  let payload;
+  try { payload = JSON.parse(txt); }
+  catch { toast("Invalid JSON."); return; }
+
+  if (!payload || typeof payload !== "object") { toast("Invalid backup."); return; }
+
+  // Replace everything
+  await dbp.tx(["categories","payments","transactions","rules","meta"], "readwrite",
+    async ({categories, payments, transactions, rules, meta}) => {
+      await reqP(categories.clear());
+      await reqP(payments.clear());
+      await reqP(transactions.clear());
+      await reqP(rules.clear());
+
+      for (const c of (payload.categories || [])) categories.put(c);
+      for (const p of (payload.payments || [])) payments.put(p);
+      for (const tx of (payload.transactions || [])) transactions.put(tx);
+      for (const r of (payload.rules || [])) rules.put(r);
+
+      meta.put({ key:"initialized", value:true });
+      meta.put({ key:"lang", value: payload.lang || "en" });
+    }
+  );
+
+  await loadAll();
+  applyLanguage();
+  resetFormAll();
+  toast("Backup imported.");
+}
+
+/* ---------- navigation ---------- */
+function setTab(name){
+  $$(".tab").forEach(el => el.classList.toggle("active", el.dataset.tab === name));
+  $("#view_add").style.display = (name === "add") ? "" : "none";
+  $("#view_transactions").style.display = (name === "transactions") ? "" : "none";
+  $("#view_settings").style.display = (name === "settings") ? "" : "none";
+}
+
+/* ---------- delete all ---------- */
+async function deleteAllTransactions(){
+  const ok = confirm(t("ui.confirmDeleteAll"));
+  if (!ok) return;
+  await dbp.clear("transactions");
+  state.transactions = [];
+  toast("Deleted all.");
+  renderTransactions();
+  renderMonthSnapshot();
+}
+
+/* ---------- bind events ---------- */
+function bindUI(){
+  // Tabs
+  $$(".tab").forEach(tab => {
+    tab.addEventListener("click", () => setTab(tab.dataset.tab));
+    tab.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") setTab(tab.dataset.tab);
+    });
+  });
+
+  // Language
+  $("#langSelect").addEventListener("change", async (e) => {
+    state.lang = e.target.value;
+    await dbp.setMeta("lang", state.lang);
+    applyLanguage();
+  });
+
+  // Forms
+  $("#txForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await saveTransactionFromForm();
+  });
+
+  // Ctrl+Enter quick save
+  document.addEventListener("keydown", async (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === "Enter"){
+      const addVisible = $("#view_add").style.display !== "none";
+      if (addVisible) await saveTransactionFromForm();
+    }
+  });
+
+  $("#btnClearForm").addEventListener("click", () => {
+    resetFormAll();
+    toast("Cleared.");
+  });
+
+  // Filters
+  $("#filterText").addEventListener("input", renderTransactions);
+  $("#filterCategory").addEventListener("change", renderTransactions);
+  $("#filterPay").addEventListener("change", renderTransactions);
+
+  // Settings buttons
+  $("#btnAddCategory").addEventListener("click", addCategory);
+  $("#btnAddPayment").addEventListener("click", addPayment);
+
+  // Export/Import
+  $("#btnExport").addEventListener("click", exportBackup);
+  $("#btnExport2").addEventListener("click", exportBackup);
+
+  $("#fileImport").addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (f) await importBackupFile(f);
+    e.target.value = "";
+  });
+  $("#fileImport2").addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (f) await importBackupFile(f);
+    e.target.value = "";
+  });
+
+  $("#btnDeleteAll").addEventListener("click", deleteAllTransactions);
+}
+
+/* ---------- boot ---------- */
+(async function main(){
+  await ensureSeeded();
+  await loadAll();
+
+  bindUI();
+
+  // Defaults
+  $("#txDate").value = todayISO();
+
+  applyLanguage();
+  renderTransactions();
+  renderSettings();
+  renderMonthSnapshot();
+
+  // Friendly first-run nudge
+  if (state.transactions.length === 0){
+    toast(t("ui.duplicateWarn"));
+  }
+})();
+</script>
+</body>
+</html>
