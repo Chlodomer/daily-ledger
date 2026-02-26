@@ -477,6 +477,10 @@
                   <span id="ui_import_backup2">Import backup</span>
                   <input id="fileImport2" type="file" accept="application/json" style="display:none">
                 </label>
+                <button type="button" id="btnUndoLast">Undo last change</button>
+                <button type="button" id="btnResetFilters">Reset filters</button>
+                <button class="danger" type="button" id="btnResetMonth">Reset this month</button>
+                <button class="danger" type="button" id="btnResetDefaults">Reset app defaults</button>
               </div>
               <div class="muted" style="font-size:12px; margin-top:10px" id="ui_data_tools_note"></div>
             </div>
@@ -530,9 +534,15 @@ const I18N = {
       addPayment: "Add payment method",
       dataTools: "Data tools",
       dataToolsNote: "Import replaces everything with the backup file contents.",
+      undoLast: "Undo last change",
+      resetFilters: "Reset filters",
+      resetMonth: "Reset this month",
+      resetDefaults: "Reset app defaults",
       confirmDeleteAll: "Delete ALL transactions? This cannot be undone.",
       confirmDeleteCategory: "Archive this category? (It will stay in existing transactions.)",
       confirmDeletePayment: "Delete this payment method? You may need to update existing transactions.",
+      confirmResetMonth: "Delete transactions for the current month only?",
+      confirmResetDefaults: "Reset app defaults? This will replace categories/payment methods and clear transactions.",
       edit: "Edit",
       del: "Delete",
       archive: "Archive",
@@ -602,9 +612,15 @@ const I18N = {
       addPayment: "הוספת אמצעי תשלום",
       dataTools: "כלי נתונים",
       dataToolsNote: "ייבוא מחליף את כל הנתונים בתכולת קובץ הגיבוי.",
+      undoLast: "ביטול שינוי אחרון",
+      resetFilters: "איפוס סינונים",
+      resetMonth: "איפוס החודש הנוכחי",
+      resetDefaults: "איפוס לברירות מחדל",
       confirmDeleteAll: "למחוק את כל התנועות? אי אפשר לבטל.",
       confirmDeleteCategory: "לארכב את הקטגוריה? (היא תישאר בתנועות קיימות.)",
       confirmDeletePayment: "למחוק את אמצעי התשלום? ייתכן שתצטרך לעדכן תנועות קיימות.",
+      confirmResetMonth: "למחוק רק את תנועות החודש הנוכחי?",
+      confirmResetDefaults: "לאפס לברירות מחדל? הפעולה תחליף קטגוריות/אמצעי תשלום ותנקה תנועות.",
       edit: "עריכה",
       del: "מחיקה",
       archive: "ארכוב",
@@ -674,9 +690,15 @@ const I18N = {
       addPayment: "Добавить способ оплаты",
       dataTools: "Инструменты данных",
       dataToolsNote: "Импорт полностью заменяет данные содержимым бэкапа.",
+      undoLast: "Отменить последнее изменение",
+      resetFilters: "Сбросить фильтры",
+      resetMonth: "Сбросить текущий месяц",
+      resetDefaults: "Сбросить к умолчаниям",
       confirmDeleteAll: "Удалить ВСЕ операции? Это нельзя отменить.",
       confirmDeleteCategory: "Архивировать категорию? (Она останется в существующих операциях.)",
       confirmDeletePayment: "Удалить способ оплаты? Возможно, придётся обновить существующие операции.",
+      confirmResetMonth: "Удалить операции только за текущий месяц?",
+      confirmResetDefaults: "Сбросить к умолчаниям? Категории/способы оплаты будут заменены, операции очищены.",
       edit: "Редактировать",
       del: "Удалить",
       archive: "Архив",
@@ -992,6 +1014,10 @@ function applyLanguage(){
   $("#ui_data_tools_note").textContent = t("ui.dataToolsNote");
   $("#btnExport2").textContent = t("ui.export");
   $("#ui_import_backup2").textContent = t("ui.import");
+  $("#btnUndoLast").textContent = t("ui.undoLast");
+  $("#btnResetFilters").textContent = t("ui.resetFilters");
+  $("#btnResetMonth").textContent = t("ui.resetMonth");
+  $("#btnResetDefaults").textContent = t("ui.resetDefaults");
 
   rebuildSelects();
   renderTransactions();
@@ -1248,6 +1274,103 @@ function escapeHtml(s){
   }[c]));
 }
 
+/* ---------- recovery helpers ---------- */
+function buildPayloadFromState(){
+  return {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    lang: state.lang,
+    categories: state.categories,
+    payments: state.payments,
+    transactions: state.transactions,
+    rules: state.rules
+  };
+}
+
+async function saveUndoSnapshot(){
+  const snapshot = JSON.parse(JSON.stringify(buildPayloadFromState()));
+  await dbp.setMeta("lastSnapshot", snapshot);
+}
+
+async function applyPayload(payload){
+  await dbp.tx(["categories","payments","transactions","rules","meta"], "readwrite",
+    async ({categories, payments, transactions, rules, meta}) => {
+      await reqP(categories.clear());
+      await reqP(payments.clear());
+      await reqP(transactions.clear());
+      await reqP(rules.clear());
+
+      for (const c of (payload.categories || [])) categories.put(c);
+      for (const p of (payload.payments || [])) payments.put(p);
+      for (const tx of (payload.transactions || [])) transactions.put(tx);
+      for (const r of (payload.rules || [])) rules.put(r);
+
+      meta.put({ key:"initialized", value:true });
+      meta.put({ key:"lang", value: payload.lang || "en" });
+    }
+  );
+
+  await loadAll();
+  applyLanguage();
+  resetFormAll();
+}
+
+async function undoLastChange(){
+  const snap = await dbp.getMeta("lastSnapshot");
+  if (!snap?.value){
+    toast("No change to undo.");
+    return;
+  }
+  await applyPayload(snap.value);
+  toast("Last change undone.");
+}
+
+function resetTransactionFilters(){
+  $("#filterText").value = "";
+  $("#filterCategory").value = "";
+  $("#filterPay").value = "";
+  renderTransactions();
+  toast("Filters reset.");
+}
+
+async function resetCurrentMonthTransactions(){
+  const ok = confirm(t("ui.confirmResetMonth"));
+  if (!ok) return;
+
+  await saveUndoSnapshot();
+
+  const m = monthKey(todayISO());
+  const keep = state.transactions.filter(x => x.month !== m);
+  await dbp.tx(["transactions"], "readwrite", async ({transactions}) => {
+    await reqP(transactions.clear());
+    for (const tx of keep) transactions.put(tx);
+  });
+  state.transactions = keep;
+
+  renderTransactions();
+  renderMonthSnapshot();
+  toast("Current month reset.");
+}
+
+async function resetAppDefaults(){
+  const ok = confirm(t("ui.confirmResetDefaults"));
+  if (!ok) return;
+
+  await saveUndoSnapshot();
+
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    lang: "en",
+    categories: seededCategories(),
+    payments: seededPayments(),
+    transactions: [],
+    rules: []
+  };
+  await applyPayload(payload);
+  toast("App defaults restored.");
+}
+
 /* ---------- actions: transactions ---------- */
 async function saveTransactionFromForm(){
   const date = $("#txDate").value;
@@ -1261,6 +1384,8 @@ async function saveTransactionFromForm(){
     toast("Missing required fields.");
     return;
   }
+
+  await saveUndoSnapshot();
 
   const txId = state.ui.editingTxId || uuid();
   const existing = state.transactions.find(x => x.id === txId);
@@ -1327,6 +1452,7 @@ function beginEditTransaction(id){
 }
 
 async function deleteTransaction(id){
+  await saveUndoSnapshot();
   await dbp.del("transactions", id);
   state.transactions = state.transactions.filter(x => x.id !== id);
   toast("Deleted.");
@@ -1353,6 +1479,7 @@ async function addCategory(){
     isArchived: false
   };
 
+  await saveUndoSnapshot();
   await dbp.put("categories", cat);
   state.categories.push(cat);
   rebuildSelects();
@@ -1368,6 +1495,7 @@ async function renameCategory(id){
   if (!next) return;
 
   // If it was built-in (nameKey), store customName override
+  await saveUndoSnapshot();
   cat.customName = next.trim();
   await dbp.put("categories", cat);
 
@@ -1386,6 +1514,7 @@ async function archiveCategory(id, archive){
     if (!ok) return;
   }
 
+  await saveUndoSnapshot();
   cat.isArchived = !!archive;
   await dbp.put("categories", cat);
 
@@ -1406,6 +1535,7 @@ async function addPayment(){
     customName: name.trim(),
     isArchived: false
   };
+  await saveUndoSnapshot();
   await dbp.put("payments", p);
   state.payments.push(p);
   rebuildSelects();
@@ -1420,6 +1550,7 @@ async function renamePayment(id){
   const next = prompt("Rename payment method:", current);
   if (!next) return;
 
+  await saveUndoSnapshot();
   p.customName = next.trim();
   await dbp.put("payments", p);
 
@@ -1432,6 +1563,7 @@ async function renamePayment(id){
 async function archivePayment(id, archive){
   const p = state.payments.find(x => x.id === id);
   if (!p) return;
+  await saveUndoSnapshot();
   p.isArchived = !!archive;
   await dbp.put("payments", p);
   rebuildSelects();
@@ -1443,6 +1575,7 @@ async function deletePayment(id){
   const ok = confirm(t("ui.confirmDeletePayment"));
   if (!ok) return;
 
+  await saveUndoSnapshot();
   await dbp.del("payments", id);
   state.payments = state.payments.filter(x => x.id !== id);
 
@@ -1455,15 +1588,7 @@ async function deletePayment(id){
 
 /* ---------- backup import/export ---------- */
 async function exportBackup(){
-  const payload = {
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    lang: state.lang,
-    categories: state.categories,
-    payments: state.payments,
-    transactions: state.transactions,
-    rules: state.rules
-  };
+  const payload = buildPayloadFromState();
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -1481,27 +1606,8 @@ async function importBackupFile(file){
 
   if (!payload || typeof payload !== "object") { toast("Invalid backup."); return; }
 
-  // Replace everything
-  await dbp.tx(["categories","payments","transactions","rules","meta"], "readwrite",
-    async ({categories, payments, transactions, rules, meta}) => {
-      await reqP(categories.clear());
-      await reqP(payments.clear());
-      await reqP(transactions.clear());
-      await reqP(rules.clear());
-
-      for (const c of (payload.categories || [])) categories.put(c);
-      for (const p of (payload.payments || [])) payments.put(p);
-      for (const tx of (payload.transactions || [])) transactions.put(tx);
-      for (const r of (payload.rules || [])) rules.put(r);
-
-      meta.put({ key:"initialized", value:true });
-      meta.put({ key:"lang", value: payload.lang || "en" });
-    }
-  );
-
-  await loadAll();
-  applyLanguage();
-  resetFormAll();
+  await saveUndoSnapshot();
+  await applyPayload(payload);
   toast("Backup imported.");
 }
 
@@ -1517,6 +1623,7 @@ function setTab(name){
 async function deleteAllTransactions(){
   const ok = confirm(t("ui.confirmDeleteAll"));
   if (!ok) return;
+  await saveUndoSnapshot();
   await dbp.clear("transactions");
   state.transactions = [];
   toast("Deleted all.");
@@ -1572,6 +1679,10 @@ function bindUI(){
   // Export/Import
   $("#btnExport").addEventListener("click", exportBackup);
   $("#btnExport2").addEventListener("click", exportBackup);
+  $("#btnUndoLast").addEventListener("click", undoLastChange);
+  $("#btnResetFilters").addEventListener("click", resetTransactionFilters);
+  $("#btnResetMonth").addEventListener("click", resetCurrentMonthTransactions);
+  $("#btnResetDefaults").addEventListener("click", resetAppDefaults);
 
   $("#fileImport").addEventListener("change", async (e) => {
     const f = e.target.files?.[0];
